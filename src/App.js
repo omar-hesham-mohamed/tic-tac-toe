@@ -7,26 +7,21 @@ function Square({value, onSquareClick}) {
   );
 }
 
-export default function Board() {
-  
-  const [squares, setSquares] = useState(Array(9).fill(null));
-  const [xIsNext, setXIsNext] = useState(true);
+function Board({squares, onPlay, xIsNext}) {
   const [gameStatus, setGameStatus] = useState('');
 
   function handleClick(i) {
     const winner = calculateWinner(squares);
     if (winner){
       setGameStatus("Winner: " + winner);
-      console.log(gameStatus);
       return;
     }
     if (squares[i]) 
       return;
     
     const nextSquares = squares.slice();
-    nextSquares[i] = xIsNext ? 'X' : 'O';
-    setSquares(nextSquares);
-    setXIsNext(!xIsNext);
+    nextSquares[i] = xIsNext ? 'X' : 'O'; 
+    onPlay(nextSquares);
     // We cant mutate state directly, react checks for state change to rerender so it wont change.
   }
 
@@ -72,5 +67,47 @@ export default function Board() {
         <Square value={squares[8]} onSquareClick={() => handleClick(8)}/>
       </div>
     </>
+  );
+}
+
+export default function Game() {
+  const [history, setHistory] = useState([Array(9).fill(null)]);
+  const [xIsNext, setXIsNext] = useState(true);
+  const [currentMove, setCurrentMove] = useState(0);
+  const currentSquares = history[history.length - 1];
+
+  function handlePlay(nextSquares) {
+    setHistory([...history, nextSquares]);
+    setXIsNext(!xIsNext);
+  }
+
+  function jumpTo(move) {
+    setHistory(history.slice(0, move + 1));
+    setXIsNext(move % 2 === 0);
+  } 
+
+  const moves = history.map((_, move) => {
+    let description;
+    if (move > 0) {
+      description = 'Go to move #' + move;
+    } else {
+      description = 'Go to game start';
+    }
+    return (
+      <li key= {move}>
+        <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    );
+  });
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board squares={currentSquares} onPlay={handlePlay} xIsNext={xIsNext}/>
+      </div>
+      <div className="game-info">
+        <ol>{moves}</ol>
+      </div>
+    </div>
   );
 }
